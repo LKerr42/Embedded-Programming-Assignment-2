@@ -2,7 +2,7 @@
 #define INPUT_OUTPUT_H
 
 typedef enum {
-    NO_KEY,
+    NO_INPUT,
     LEFT_DOWN,
     LEFT_UP,
     RIGHT_DOWN,

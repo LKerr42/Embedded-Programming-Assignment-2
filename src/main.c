@@ -37,6 +37,7 @@ Player* create_player(Vec2 S, Vec2 P, Colour C) {
 }
 
 Player *player = NULL;
+KEY_TYPE currentKey = NO_INPUT;
 
 // static const Colour WHITE  = {255, 255, 255};
 // static const Colour BLACK  = {0, 0, 0};
@@ -50,13 +51,15 @@ static const Colour RED    = {255, 0, 0};
 void update() {
     KEY_TYPE key = getInput();
 
-    switch (key) {
+    if (key != NO_INPUT) currentKey = key;
+
+    switch (currentKey) {
         case LEFT_DOWN:
-            player->velocity = 4;
+            player->velocity = 2;
             player->moving = 1;
             break;
         case RIGHT_DOWN:
-            player->velocity = -4;
+            player->velocity = -2;
             player->moving = 1;
             break;  
         case LEFT_UP:
@@ -67,16 +70,17 @@ void update() {
             player->velocity = 0;
             player->moving = 0;
             break;
-        case NO_KEY:
-            player->velocity = 0;
-            player->moving = 0;
+        case NO_INPUT:
             break; 
     }
 
     if (player->moving) {
         player->pos.y += player->velocity;
     }
-    
+
+    if (player->pos.y <= 1 || player->pos.y >= 100) {
+        player->pos.y += -(player->velocity);
+    }
 }
 
 void render() {
@@ -105,7 +109,7 @@ void app_main() {
     input_output_init();
 
     //init player
-    player = create_player((Vec2){25, 50}, (Vec2){80, 50}, RED);
+    player = create_player((Vec2){20, 40}, (Vec2){200, 50}, RED);
 
     while (1) {
         //ets_printf("GAME LOOP RUNNING\n");

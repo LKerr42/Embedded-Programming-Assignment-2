@@ -40,9 +40,9 @@ static void IRAM_ATTR gpio_isr_handler(void *arg) {
 
     uint32_t gpioNum = (uint32_t) arg;
     int gpioIndex = (gpioNum == 35);
-    int val = gpio_get_level(gpioNum);
+    int val = (1 - buttonVal[gpioIndex]);
 
-    ets_printf("gpio_isr_handler %d %d %lld\n", gpioNum, val, now - lastKeyPress);
+    //ets_printf("gpio_isr_handler %d %d %lld\n", gpioNum, val, now - lastKeyPress);
 
     //ignore interrupts within 50 ms
     if (now - lastKeyPress > 50000) {
@@ -64,18 +64,18 @@ static void IRAM_ATTR gpio_isr_handler(void *arg) {
     }
     buttonVal[gpioIndex] = val;
 
-    // gpio_set_intr_type(
-    //     gpioNum, 
-    //     val == 0 ?
-    //         GPIO_INTR_HIGH_LEVEL
-    //             :
-    //         GPIO_INTR_LOW_LEVEL
-    // );
+    gpio_set_intr_type(
+        gpioNum, 
+        val == 0 ?
+            GPIO_INTR_HIGH_LEVEL
+                :
+            GPIO_INTR_LOW_LEVEL
+    );
 }
 
 KEY_TYPE getInput() {
     int key;
-    if(xQueueReceive(inputQueue, &key, 0) == pdFALSE) return NO_KEY;
+    if(xQueueReceive(inputQueue, &key, 0) == pdFALSE) return NO_INPUT;
     
     switch(key) {
         case leftButton: return LEFT_DOWN;
@@ -83,11 +83,11 @@ KEY_TYPE getInput() {
         case 100 + leftButton: return LEFT_UP;
         case 100 + rightButton: return RIGHT_UP;
     }
-    return NO_KEY;
+    return NO_INPUT;
 }
 
 void input_output_init() {
-    ets_printf("INPUT OUTPUT INIT STARTED\n");
+    //ets_printf("INPUT OUTPUT INIT STARTED\n");
     
     // Create a queue for button events
     inputQueue = xQueueCreate(16, 4);
@@ -103,8 +103,8 @@ void input_output_init() {
     gpio_set_direction(35, GPIO_MODE_INPUT);
     gpio_set_direction(0, GPIO_MODE_INPUT);
     // Interrupt when a button is pressed
-    gpio_set_intr_type(35, GPIO_INTR_ANYEDGE);
-    gpio_set_intr_type(0, GPIO_INTR_ANYEDGE);
+    gpio_set_intr_type(35, GPIO_INTR_LOW_LEVEL);
+    gpio_set_intr_type(0, GPIO_INTR_LOW_LEVEL);
     // Install the GPIO interrupt service
     gpio_install_isr_service(0);
     // Attach ISR to GPIO 35 and 0
