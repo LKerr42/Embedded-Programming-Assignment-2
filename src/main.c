@@ -1,12 +1,13 @@
-#include <soc/uart_struct.h>
-#include <soc/gpio_struct.h>
-#include <driver/gpio.h>
+#include <rom/ets_sys.h>
 #include <esp_timer.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
+
 #include <graphics.h>
 #include <fonts.h>
 #include <stdio.h>
+
+#include "input_output.h"
 
 typedef struct Colour {
     int r, g, b;
@@ -19,20 +20,9 @@ typedef struct Vec2 {
 typedef struct Player {
     Vec2 size, pos;
     Colour colour;
+    uint8_t moving;
+    int16_t velocity;
 } Player;
-
-QueueHandle_t inputQueue;
-const int leftButton = 0, rightButton = 35;
-Player *player = NULL;
-
-// static const Colour WHITE  = {255, 255, 255};
-// static const Colour BLACK  = {0, 0, 0};
-static const Colour RED    = {255, 0, 0};
-// static const Colour BLUE   = {0, 0, 255};
-// static const Colour YELLOW = {255, 255, 0};
-// static const Colour GREEN  = {0, 255, 0};
-// static const Colour ORANGE = {255, 128, 0};
-// static const Colour PURPLE = {191, 0, 255};
 
 Player* create_player(Vec2 S, Vec2 P, Colour C) {
     // Allocate memory
@@ -46,36 +36,47 @@ Player* create_player(Vec2 S, Vec2 P, Colour C) {
     return p; 
 }
 
-void do_a_task(char *msg) {
-    cls(0);
-    print_xy(msg, CENTER, CENTER);
-    flip_frame();
-    vTaskDelay(pdMS_TO_TICKS(200));
-}
+Player *player = NULL;
 
-// Interrupt Service Routine
-static void IRAM_ATTR gpio_isr_handler(void *arg) {
-    static uint64_t last_time = 0;
-    uint64_t now = esp_timer_get_time();
-
-    //ignore interrupts within 50 ms
-    if (now - last_time > 50000) {
-        int event = *((int *)arg);
-        // Send the button event to the queue
-        xQueueSendFromISR(inputQueue, &event, NULL);
-        last_time = now;
-    }
-}
+// static const Colour WHITE  = {255, 255, 255};
+// static const Colour BLACK  = {0, 0, 0};
+static const Colour RED    = {255, 0, 0};
+// static const Colour BLUE   = {0, 0, 255};
+// static const Colour YELLOW = {255, 255, 0};
+// static const Colour GREEN  = {0, 255, 0};
+// static const Colour ORANGE = {255, 128, 0};
+// static const Colour PURPLE = {191, 0, 255};
 
 void update() {
-    int event;
-    if (xQueueReceive(inputQueue, &event, 0) == pdTRUE) {
-        if (event == leftButton) {
-            player->pos.x -= 2;
-        } else if (event == rightButton) {
-            player->pos.x += 2;
-        }
+    KEY_TYPE key = getInput();
+
+    switch (key) {
+        case LEFT_DOWN:
+            player->velocity = 4;
+            player->moving = 1;
+            break;
+        case RIGHT_DOWN:
+            player->velocity = -4;
+            player->moving = 1;
+            break;  
+        case LEFT_UP:
+            player->velocity = 0;
+            player->moving = 0;
+            break;
+        case RIGHT_UP:
+            player->velocity = 0;
+            player->moving = 0;
+            break;
+        case NO_KEY:
+            player->velocity = 0;
+            player->moving = 0;
+            break; 
     }
+
+    if (player->moving) {
+        player->pos.y += player->velocity;
+    }
+    
 }
 
 void render() {
@@ -100,26 +101,19 @@ void render() {
 void app_main() {
     graphics_init();
     setFont(FONT_DEJAVU18);
-    // Create a queue for button events
-    inputQueue = xQueueCreate(1, sizeof(int));
-    // Configure buttons as input
-    gpio_set_direction(35, GPIO_MODE_INPUT);
-    gpio_set_direction(0, GPIO_MODE_INPUT);
-    // Interrupt when a button is pressed
-    gpio_set_intr_type(35, GPIO_INTR_NEGEDGE);
-    gpio_set_intr_type(0, GPIO_INTR_NEGEDGE);
-    // Install the GPIO interrupt service
-    gpio_install_isr_service(0);
-    // Attach ISR to GPIO 35 and 0
-    gpio_isr_handler_add(35, gpio_isr_handler, (void *)&rightButton);
-    gpio_isr_handler_add(0, gpio_isr_handler, (void *)&leftButton);
+
+    input_output_init();
 
     //init player
-    player = create_player((Vec2){50, 25}, (Vec2){50, 50}, RED);
+    player = create_player((Vec2){25, 50}, (Vec2){80, 50}, RED);
 
     while (1) {
+        //ets_printf("GAME LOOP RUNNING\n");
+
         update();
         render();
+
+        //vTaskDelay(pdMS_TO_TICKS(1000));
     }
 
     // -- GRAPHICS DEMO --
