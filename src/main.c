@@ -6,6 +6,8 @@
 #include <graphics.h>
 #include <fonts.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 
 #include "input_output.h"
 
@@ -13,33 +15,7 @@ typedef struct Colour {
     int r, g, b;
 } Colour;
 
-typedef struct Vec2 {
-    int x, y;
-} Vec2;
-
-typedef struct Player {
-    Vec2 size, pos;
-    Colour colour;
-    uint8_t moving;
-    int16_t velocity;
-} Player;
-
-Player* create_player(Vec2 S, Vec2 P, Colour C) {
-    // Allocate memory
-    Player* p = calloc(1, sizeof(Player)); 
-    if (p == NULL) return NULL;     
-    
-    p->size = S;
-    p->pos = P;
-    p->colour = C;
-    
-    return p; 
-}
-
-Player *player = NULL;
-KEY_TYPE currentKey = NO_INPUT;
-
-// static const Colour WHITE  = {255, 255, 255};
+static const Colour WHITE  = {255, 255, 255};
 // static const Colour BLACK  = {0, 0, 0};
 static const Colour RED    = {255, 0, 0};
 // static const Colour BLUE   = {0, 0, 255};
@@ -48,26 +24,87 @@ static const Colour RED    = {255, 0, 0};
 // static const Colour ORANGE = {255, 128, 0};
 // static const Colour PURPLE = {191, 0, 255};
 
+typedef struct Vec2 {
+    int x, y;
+} Vec2;
+
+typedef struct Entity {
+    Vec2 size, pos, velocity;
+    Colour colour;
+    uint8_t moving;
+} Entity;
+
+typedef struct EnemyNode EnemyNode;
+
+typedef struct EnemyNode {
+    EnemyNode *fowards, *backwards;
+    Entity *enemy;
+} EnemyNode;
+
+typedef struct LinkedList {
+    EnemyNode *headPointer, *tailPointer;
+} LinkedList;
+
+Entity* create_entity(Vec2 S, Vec2 P, Colour C) {
+    // Allocate memory
+    Entity* e = calloc(1, sizeof(Entity)); 
+    if (e == NULL) return NULL;     
+    
+    e->size = S;
+    e->pos = P;
+    e->colour = C;
+    
+    return e; 
+}
+
+void add_node(LinkedList *list) {
+    EnemyNode *temp = calloc(1, sizeof(EnemyNode));
+    temp->enemy = create_entity((Vec2){40, 20}, (Vec2){0, rand() % 100}, WHITE);
+    temp->enemy->moving = 1;
+    temp->enemy->velocity = (Vec2){2, 0};
+
+    temp->backwards = list->tailPointer;
+    temp->fowards = NULL;
+
+    if (list->headPointer == NULL) list->headPointer = temp;
+    if (list->tailPointer != NULL) list->tailPointer->fowards = temp;
+    list->tailPointer = temp;
+}
+
+void pop_node(LinkedList *list) {
+    if (list->headPointer == NULL) return;
+
+    EnemyNode *second = list->headPointer->fowards;
+    second->backwards = NULL;
+    free(list->headPointer);
+    list->headPointer = second;
+}
+
+Entity *player = NULL;
+LinkedList *enemies = NULL;
+KEY_TYPE currentKey = NO_INPUT;
+
 void update() {
     KEY_TYPE key = getInput();
 
     if (key != NO_INPUT) currentKey = key;
 
+    //update player values based on current inout
     switch (currentKey) {
         case LEFT_DOWN:
-            player->velocity = 2;
+            player->velocity.y = 2;
             player->moving = 1;
             break;
         case RIGHT_DOWN:
-            player->velocity = -2;
+            player->velocity.y = -2;
             player->moving = 1;
-            break;  
+            break;   
         case LEFT_UP:
-            player->velocity = 0;
+            player->velocity.y = 0;
             player->moving = 0;
             break;
         case RIGHT_UP:
-            player->velocity = 0;
+            player->velocity.y = 0;
             player->moving = 0;
             break;
         case NO_INPUT:
@@ -75,17 +112,34 @@ void update() {
     }
 
     if (player->moving) {
-        player->pos.y += player->velocity;
+        player->pos.x += player->velocity.x;
+        player->pos.y += player->velocity.y;
     }
 
+    //keep player in bounds
     if (player->pos.y <= 1 || player->pos.y >= 100) {
-        player->pos.y += -(player->velocity);
+        player->pos.y += -(player->velocity.y);
+    }
+
+    //update all enemies
+    EnemyNode *current = enemies->headPointer;
+    while (current != NULL) {
+        current->enemy->pos.x += current->enemy->velocity.x;
+        current->enemy->pos.y += current->enemy->velocity.y;
+        current = current->fowards;
+    }
+
+    //check if the front node is out of bounds
+    if (enemies->headPointer->enemy->pos.x >= 200) {
+        pop_node(enemies);
+        add_node(enemies);
     }
 }
 
 void render() {
     cls(0);
     
+    //draw player
     draw_rectangle(
         player->pos.x, 
         player->pos.y, 
@@ -98,6 +152,24 @@ void render() {
         )
     );
 
+    //draw all enemies
+    EnemyNode *current = enemies->headPointer;
+    while (current != NULL) {
+        draw_rectangle(
+            current->enemy->pos.x, 
+            current->enemy->pos.y, 
+            current->enemy->size.x, 
+            current->enemy->size.y, 
+            rgbToColour(
+                current->enemy->colour.r,
+                current->enemy->colour.g,
+                current->enemy->colour.b
+            )
+        );
+
+        current = current->fowards;
+    }
+
     flip_frame();
 }
 
@@ -108,8 +180,15 @@ void app_main() {
 
     input_output_init();
 
+    //seed rand() with the current time
+    srand(time(NULL)); 
+
     //init player
-    player = create_player((Vec2){20, 40}, (Vec2){200, 50}, RED);
+    player = create_entity((Vec2){20, 40}, (Vec2){200, 50}, RED);
+
+    //init enemies
+    enemies = calloc(1, sizeof(LinkedList));
+    add_node(enemies);
 
     while (1) {
         //ets_printf("GAME LOOP RUNNING\n");
