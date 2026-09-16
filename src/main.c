@@ -2,6 +2,8 @@
 #include <esp_timer.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
+#include <soc/gpio_struct.h>
+#include <driver/gpio.h>
 
 #include <graphics.h>
 #include <fonts.h>
@@ -59,7 +61,7 @@ Entity* create_entity(Vec2 S, Vec2 P, Colour C) {
 
 void add_node(LinkedList *list) {
     EnemyNode *temp = calloc(1, sizeof(EnemyNode));
-    temp->enemy = create_entity((Vec2){40, 20}, (Vec2){0, rand() % 100}, WHITE);
+    temp->enemy = create_entity((Vec2){20, 10}, (Vec2){0, rand() % 100}, WHITE);
     temp->enemy->moving = 1;
     temp->enemy->velocity = (Vec2){2, 0};
 
@@ -74,10 +76,18 @@ void add_node(LinkedList *list) {
 void pop_node(LinkedList *list) {
     if (list->headPointer == NULL) return;
 
-    EnemyNode *second = list->headPointer->fowards;
-    second->backwards = NULL;
-    free(list->headPointer);
-    list->headPointer = second;
+    EnemyNode *oldHead = list->headPointer;
+    list->headPointer = oldHead->fowards;
+
+    if (list->headPointer != NULL) {
+        list->headPointer->backwards = NULL;
+    } else {
+        list->tailPointer = NULL;
+    }
+
+    //free memory
+    free(oldHead->enemy);   
+    free(oldHead);
 }
 
 Entity *player = NULL;
@@ -129,8 +139,12 @@ void update() {
         current = current->fowards;
     }
 
-    //check if the front node is out of bounds
-    if (enemies->headPointer->enemy->pos.x >= 200) {
+    //check for collision and 
+    //first, confirm there is a front node
+    if (enemies->headPointer == NULL) return;
+
+    //then if we can continue, pop and add a new node
+    if (enemies->headPointer->enemy->pos.x >= 210) {
         pop_node(enemies);
         add_node(enemies);
     }
@@ -183,8 +197,19 @@ void app_main() {
     //seed rand() with the current time
     srand(time(NULL)); 
 
+    
+    
+
+    //wait for user input to start
+    while (!gpio_get_level(0)) {
+        //display instructions
+        cls(0);
+        gprintf("Me when\n");
+        flip_frame();
+    }
+
     //init player
-    player = create_entity((Vec2){20, 40}, (Vec2){200, 50}, RED);
+    player = create_entity((Vec2){10, 20}, (Vec2){210, 50}, RED);
 
     //init enemies
     enemies = calloc(1, sizeof(LinkedList));
