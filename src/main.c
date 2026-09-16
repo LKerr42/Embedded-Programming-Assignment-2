@@ -2,8 +2,6 @@
 #include <esp_timer.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
-#include <soc/gpio_struct.h>
-#include <driver/gpio.h>
 
 #include <graphics.h>
 #include <fonts.h>
@@ -12,6 +10,12 @@
 #include <time.h>
 
 #include "input_output.h"
+
+typedef enum AppState {
+    INSTRUCTIONS,
+    PLAY,
+    SCORE
+} AppState;
 
 typedef struct Colour {
     int r, g, b;
@@ -93,13 +97,42 @@ void pop_node(LinkedList *list) {
 Entity *player = NULL;
 LinkedList *enemies = NULL;
 KEY_TYPE currentKey = NO_INPUT;
+AppState currentState = INSTRUCTIONS;
+int currentScore = 0;
+
+void reset_game() {
+    //reset game values
+    currentState = PLAY;
+    setFontColour(255, 255, 0);
+    player->pos.y = 50;
+    currentScore = 0;
+
+    //clear all enemies
+    EnemyNode *current = enemies->headPointer;
+    while (current != NULL) {
+        pop_node(enemies);
+        current = enemies->headPointer;
+    }
+
+    //add new node
+    add_node(enemies);
+}
 
 void update() {
     KEY_TYPE key = getInput();
 
     if (key != NO_INPUT) currentKey = key;
 
-    //update player values based on current inout
+    if (currentState == INSTRUCTIONS) {
+        if (currentKey == LEFT_DOWN) reset_game();
+        return;
+    } else if (currentState == SCORE) {
+        vTaskDelay(pdMS_TO_TICKS(4000));
+        reset_game();
+        return;
+    }
+
+    //update player values based on current input
     switch (currentKey) {
         case LEFT_DOWN:
             player->velocity.y = 2;
@@ -129,6 +162,10 @@ void update() {
     //keep player in bounds
     if (player->pos.y <= 1 || player->pos.y >= 100) {
         player->pos.y += -(player->velocity.y);
+        //temp, check timer works
+        setFontColour(255, 255, 255);
+        currentState = SCORE;
+        return;
     }
 
     //update all enemies
@@ -143,8 +180,10 @@ void update() {
     //first, confirm there is a front node
     if (enemies->headPointer == NULL) return;
 
-    //then if we can continue, pop and add a new node
+    //then if we can continue, add to score then pop and add a new node
     if (enemies->headPointer->enemy->pos.x >= 210) {
+        currentScore += 100;
+
         pop_node(enemies);
         add_node(enemies);
     }
@@ -153,6 +192,20 @@ void update() {
 void render() {
     cls(0);
     
+    if (currentState != PLAY) {
+        if (currentState == INSTRUCTIONS) {
+            print_xy("Instructions:\n", 0, 0);
+            print_xy("Bottom for down, top for up,\navoid the enemies, get points\n", CENTER, CENTER);
+        } else {
+            char buffer[32];
+            snprintf(buffer, sizeof(buffer), "You Died!\nScore: %i\n", currentScore);
+            print_xy(buffer, CENTER, CENTER);
+        }
+        
+        flip_frame();
+        return;
+    }
+
     //draw player
     draw_rectangle(
         player->pos.x, 
@@ -184,6 +237,10 @@ void render() {
         current = current->fowards;
     }
 
+    //render score
+    draw_rectangle(0, 0, 80, 16, rgbToColour(0,0,0));
+    gprintf("Score: %i\n", currentScore);
+
     flip_frame();
 }
 
@@ -191,22 +248,12 @@ void render() {
 void app_main() {
     graphics_init();
     setFont(FONT_DEJAVU18);
+    //setFont(FONT_SMALL);
 
     input_output_init();
 
     //seed rand() with the current time
     srand(time(NULL)); 
-
-    
-    
-
-    //wait for user input to start
-    while (!gpio_get_level(0)) {
-        //display instructions
-        cls(0);
-        gprintf("Me when\n");
-        flip_frame();
-    }
 
     //init player
     player = create_entity((Vec2){10, 20}, (Vec2){210, 50}, RED);
