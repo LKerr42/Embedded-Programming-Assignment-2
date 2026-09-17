@@ -160,7 +160,7 @@ void update() {
     }
 
     //keep player in bounds
-    if (player->pos.y <= 1 || player->pos.y >= 100) {
+    if (player->pos.y <= 1 || player->pos.y + player->size.y >= 135) {
         player->pos.y += -(player->velocity.y);
         //temp, check timer works
         setFontColour(255, 255, 255);
@@ -181,7 +181,7 @@ void update() {
     if (enemies->headPointer == NULL) return;
 
     //then if we can continue, add to score then pop and add a new node
-    if (enemies->headPointer->enemy->pos.x >= 210) {
+    if (enemies->headPointer->enemy->pos.x + enemies->headPointer->enemy->size.x >= 240) {
         currentScore += 100;
 
         pop_node(enemies);
@@ -195,11 +195,14 @@ void render() {
     if (currentState != PLAY) {
         if (currentState == INSTRUCTIONS) {
             print_xy("Instructions:\n", 0, 0);
-            print_xy("Bottom for down, top for up,\navoid the enemies, get points\n", CENTER, CENTER);
+            print_xy("Bottom for down, top for up,\n", CENTER, (display_height >> 1) - 24);
+            print_xy("avoid the enemies, get points.\n", CENTER, (display_height >> 1) - 8);
+            print_xy("Press the left button to start\n", CENTER, (display_height >> 1) + 8);
         } else {
-            char buffer[32];
-            snprintf(buffer, sizeof(buffer), "You Died!\nScore: %i\n", currentScore);
-            print_xy(buffer, CENTER, CENTER);
+            char buffer[16];
+            snprintf(buffer, sizeof(buffer), "Score: %i\n", currentScore);
+            print_xy("You Died!\n", CENTER, (display_height >> 1) - 16);
+            print_xy(buffer, CENTER, (display_height >> 1));
         }
         
         flip_frame();
@@ -247,7 +250,7 @@ void render() {
 
 void app_main() {
     graphics_init();
-    setFont(FONT_DEJAVU18);
+    setFont(FONT_UBUNTU16);
     //setFont(FONT_SMALL);
 
     input_output_init();
@@ -301,19 +304,5 @@ void app_main() {
     //     last_time = current_time;
         
     //     flip_frame();
-    // }
-
-    // -- BUTTON DEMO --
-    // volatile unsigned *GPIO_OUTPUT_ENABLE=(unsigned *)0x3ff44020;
-    // volatile unsigned *GPIO_OUTPUT=(unsigned *)0x3ff44004;
-    // *GPIO_OUTPUT_ENABLE |= (1<<4);
-    // while(1) {
-    //     if(!(GPIO.in1.data & 8)) {
-    //         // set gpio 4 to 1
-    //         *GPIO_OUTPUT |= (1<<4);
-    //     } else {
-    //         // clear gpio 4
-    //         *GPIO_OUTPUT &= ~(1<<4);
-    //     }
     // }
 }
