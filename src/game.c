@@ -1,0 +1,80 @@
+#include "game.h"
+
+extern GameState gameState;
+
+static const Colour WHITE  = {255, 255, 255};
+// static const Colour BLACK  = {0, 0, 0};
+static const Colour RED    = {255, 0, 0};
+// static const Colour BLUE   = {0, 0, 255};
+// static const Colour YELLOW = {255, 255, 0};
+// static const Colour GREEN  = {0, 255, 0};
+// static const Colour ORANGE = {255, 128, 0};
+// static const Colour PURPLE = {191, 0, 255};
+
+void init_game() {
+    //init player
+    gameState.player = create_entity((Vec2){10, 20}, (Vec2){210, 50}, RED);
+
+    //init enemies
+    gameState.enemies = calloc(1, sizeof(LinkedList));
+    add_node(gameState.enemies);
+}
+
+Entity* create_entity(Vec2 S, Vec2 P, Colour C) {
+    // Allocate memory
+    Entity* e = calloc(1, sizeof(Entity)); 
+    if (e == NULL) return NULL;     
+    
+    e->size = S;
+    e->pos = P;
+    e->colour = C;
+    
+    return e; 
+}
+
+void add_node(LinkedList *list) {
+    EnemyNode *temp = calloc(1, sizeof(EnemyNode));
+    temp->enemy = create_entity((Vec2){20, 10}, (Vec2){0, rand() % 100}, WHITE);
+    temp->enemy->moving = 1;
+    temp->enemy->velocity = (Vec2){2, 0};
+
+    temp->backwards = list->tailPointer;
+    temp->fowards = NULL;
+
+    if (list->headPointer == NULL) list->headPointer = temp;
+    if (list->tailPointer != NULL) list->tailPointer->fowards = temp;
+    list->tailPointer = temp;
+}
+
+void pop_node(LinkedList *list) {
+    if (list->headPointer == NULL) return;
+
+    EnemyNode *oldHead = list->headPointer;
+    list->headPointer = oldHead->fowards;
+
+    if (list->headPointer != NULL) {
+        list->headPointer->backwards = NULL;
+    } else {
+        list->tailPointer = NULL;
+    }
+
+    //free memory
+    free(oldHead->enemy);   
+    free(oldHead);
+}
+
+void reset_game() {
+    //reset game values
+    gameState.player->pos.y = 50;
+    gameState.score = 0;
+
+    //clear all enemies
+    EnemyNode *current = gameState.enemies->headPointer;
+    while (current != NULL) {
+        pop_node(gameState.enemies);
+        current = gameState.enemies->headPointer;
+    }
+
+    //add new node
+    add_node(gameState.enemies);
+}
