@@ -11,8 +11,12 @@ typedef struct Vec2 {
     int x, y;
 } Vec2;
 
+typedef struct Vec2F {
+    float x, y;
+} Vec2F;
+
 typedef struct Entity {
-    Vec2 size, pos, velocity;
+    Vec2F size, pos, velocity;
     Colour colour;
     uint8_t moving;
 } Entity;
@@ -34,10 +38,13 @@ typedef struct GameState {
     int score;
 } GameState;
 
-Entity* create_entity(Vec2 S, Vec2 P, Colour C);
+Entity* create_entity(Vec2F S, Vec2F P, Colour C);
 void init_game();
 void add_node(LinkedList *list);
 void pop_node(LinkedList *list);
 void reset_game();
+
+void changeSpeedCallback(void* arg);
+void addEnemyCallback(void* arg);
 
 #endif

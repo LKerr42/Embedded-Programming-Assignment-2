@@ -11,6 +11,7 @@
 
 #include "input_output.h"
 #include "game.h"
+#include "timer.h"
 
 typedef enum AppState {
     INSTRUCTIONS,
@@ -23,6 +24,9 @@ GameState gameState;
 KEY_TYPE currentKey = NO_INPUT;
 AppState currentState = INSTRUCTIONS;
 
+//abritrary timers, the fourth timer is reserved for io
+timer* timers[3] = {NULL, NULL, NULL};
+
 void set_app_state(AppState newState) {
     if (newState == PLAY) {
         reset_game();
@@ -31,17 +35,37 @@ void set_app_state(AppState newState) {
     currentState = newState;
 }
 
+void restart_game_callback(void* arg) {
+    set_app_state(PLAY);
+
+    stop_timer(timers[2]);
+}
+
 void update() {
+    //handle inputs
     KEY_TYPE key = getInput();
 
     if (key != NO_INPUT) currentKey = key;
 
+    //handle timers
+    for (int i = 0; i < 3; i++) {
+        if (timers[i] == NULL) continue;
+        if (timers[i]->triggered) {
+            timers[i]->callback(timers[i]->argument);
+            timers[i]->triggered = 0;
+        }
+    }
+
+    //handle alt app states
     if (currentState == INSTRUCTIONS) {
-        if (currentKey == LEFT_DOWN) set_app_state(PLAY);
+        if (currentKey == LEFT_DOWN) {
+            set_app_state(PLAY);
+            start_timer(timers[0]);
+            start_timer(timers[1]);
+        }
         return;
     } else if (currentState == SCORE) {
-        vTaskDelay(pdMS_TO_TICKS(4000));
-        set_app_state(PLAY);
+        start_timer(timers[2]);
         return;
     }
 
@@ -89,7 +113,7 @@ void update() {
         current = current->fowards;
     }
 
-    //check for collision and 
+    //check for collision and enemy death
     //first, confirm there is a front node
     if (gameState.enemies->headPointer == NULL) return;
 
@@ -154,7 +178,7 @@ void render() {
     }
 
     //render score
-    draw_rectangle(0, 0, 80, 16, rgbToColour(0,0,0));
+    //draw_rectangle(0, 0, 80, 16, rgbToColour(0,0,0));
     gprintf("Score: %i\n", gameState.score);
 
     flip_frame();
@@ -171,6 +195,11 @@ void app_main() {
 
     //seed rand() with the current time
     srand(time(NULL)); 
+
+    //timers
+    timers[0] = init_timer(20.0, 0, 0, changeSpeedCallback, NULL);
+    timers[1] = init_timer(15.0, 0, 1, addEnemyCallback, NULL);
+    timers[2] = init_timer(4.0, 1, 0, restart_game_callback, NULL);
 
     while (1) {
         //ets_printf("GAME LOOP RUNNING\n");
