@@ -8,19 +8,21 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 
+#include "timer.h"
 #include <stdio.h>
 
 GPIOState *GPIOhandler;
+extern timer* timers[4];
 
 static QueueHandle_t inputQueue;
-static TimerHandle_t repeatTimer;
+//static TimerHandle_t repeatTimer;
 static int buttonVal[2] = {1, 1};
 int keyRepeat = 1;
 static uint64_t lastKeyPress = 0;
 
 const int leftButton = 0, rightButton = 35;
 
-static void repeatTimerCallback(TimerHandle_t pxTimer) {
+static void repeatTimerCallback(void* arg) {
     int v;
     if(buttonVal[0] == 0) {
         v = leftButton;
@@ -32,8 +34,8 @@ static void repeatTimerCallback(TimerHandle_t pxTimer) {
         xQueueSend(inputQueue, &v, 0);
     }
 
-    xTimerChangePeriod( repeatTimer, pdMS_TO_TICKS(200), 0);
-    xTimerStart( repeatTimer, 0 );
+    update_timer_period(timers[3], 0.2);
+    start_timer(timers[3]);
 }
 
 static void gpio_isr_callback() {
@@ -52,12 +54,12 @@ static void gpio_isr_callback() {
     
     //start/stop timer
     if(val == 0 && keyRepeat) {
-        xTimerChangePeriod(repeatTimer, pdMS_TO_TICKS(400), 0);
-        xTimerStart(repeatTimer, 0);
+        update_timer_period(timers[3], 0.4);
+        start_timer(timers[3]);
     }
 
     if(val == 1 && keyRepeat) {
-        xTimerStop(repeatTimer, 0);
+        stop_timer(timers[3]);
     }
 
     buttonVal[gpioIndex] = val;
@@ -98,12 +100,16 @@ void input_output_init() {
     
     // Create a queue for button events
     inputQueue = xQueueCreate(16, 4);
-    repeatTimer = xTimerCreate(
-        "repeat",
-        pdMS_TO_TICKS(300),
-        pdFALSE,
-        (void*)0, 
-        repeatTimerCallback
+    // repeatTimer = xTimerCreate(
+    //     "repeat",
+    //     pdMS_TO_TICKS(300),
+    //     pdFALSE,
+    //     (void*)0, 
+    //     repeatTimerCallback
+    // );
+
+    timers[3] = init_timer(
+        0.3, 1, 1, repeatTimerCallback, NULL
     );
     
     // Configure buttons as input

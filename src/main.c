@@ -25,7 +25,7 @@ KEY_TYPE currentKey = NO_INPUT;
 AppState currentState = INSTRUCTIONS;
 
 //abritrary timers, the fourth timer is reserved for io
-timer* timers[3] = {NULL, NULL, NULL};
+timer* timers[4] = {NULL, NULL, NULL, NULL};
 
 extern GPIOState *GPIOhandler;
 
@@ -45,14 +45,14 @@ void restart_game_callback(void* arg) {
 
 void update() {
     //handle timers
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 4; i++) {
         if (timers[i] == NULL) continue;
         if (timers[i]->triggered) {
             timers[i]->callback(timers[i]->argument);
             timers[i]->triggered = 0;
         }
     }
-    
+
     //handle GPIO callback
     if (GPIOhandler->triggered) {
         GPIOhandler->callback();
