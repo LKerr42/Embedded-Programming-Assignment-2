@@ -44,7 +44,7 @@ void add_node(LinkedList *list);
 void pop_node(LinkedList *list);
 void reset_game();
 
-void changeSpeedCallback(void* arg);
-void addEnemyCallback(void* arg);
+void change_speed_callback(void* arg);
+void add_enemy_callback(void* arg);
 
 #endif

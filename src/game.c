@@ -39,7 +39,7 @@ void add_node(LinkedList *list) {
     numberEnemies++;
 
     EnemyNode *temp = calloc(1, sizeof(EnemyNode));
-    temp->enemy = create_entity((Vec2F){20, 10}, (Vec2F){0, rand() % 100}, WHITE);
+    temp->enemy = create_entity((Vec2F){20, 10}, (Vec2F){0, rand() % 125}, WHITE);
     temp->enemy->moving = 1;
     temp->enemy->velocity = (Vec2F){currentEnemyVelocity, 0};
 
@@ -86,7 +86,7 @@ void reset_game() {
     add_node(gameState.enemies);
 }
 
-void changeSpeedCallback(void* arg) {
+void change_speed_callback(void* arg) {
     float speedDelta = 0.5;
 
     if (currentEnemyVelocity + speedDelta == 6) return;
@@ -101,7 +101,7 @@ void changeSpeedCallback(void* arg) {
     }
 }
 
-void addEnemyCallback(void* arg) {
+void add_enemy_callback(void* arg) {
     if (numberEnemies == 10) return;
 
     add_node(gameState.enemies);

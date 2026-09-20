@@ -15,7 +15,6 @@ GPIOState *GPIOhandler;
 extern timer* timers[4];
 
 static QueueHandle_t inputQueue;
-//static TimerHandle_t repeatTimer;
 static int buttonVal[2] = {1, 1};
 int keyRepeat = 1;
 static uint64_t lastKeyPress = 0;
@@ -100,14 +99,8 @@ void input_output_init() {
     
     // Create a queue for button events
     inputQueue = xQueueCreate(16, 4);
-    // repeatTimer = xTimerCreate(
-    //     "repeat",
-    //     pdMS_TO_TICKS(300),
-    //     pdFALSE,
-    //     (void*)0, 
-    //     repeatTimerCallback
-    // );
 
+    //create timer
     timers[3] = init_timer(
         0.3, 1, 1, repeatTimerCallback, NULL
     );

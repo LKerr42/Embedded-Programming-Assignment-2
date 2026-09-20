@@ -26,7 +26,7 @@ timer* init_timer(float seconds, int groupNum, int timerNum, void (*timerCallbac
     int counts = seconds * 1000000;
 
     timer_group_t group = (groupNum) ? TIMER_GROUP_1 : TIMER_GROUP_0;
-    timer_idx_t number = (timerNum) ? TIMER_1 : TIMER_0;
+    timer_idx_t number  = (timerNum) ? TIMER_1 : TIMER_0;
 
     timer* timerEntity = calloc(1, sizeof(timer));
 
@@ -36,9 +36,9 @@ timer* init_timer(float seconds, int groupNum, int timerNum, void (*timerCallbac
     timerEntity->callback = timerCallback;
     timerEntity->argument = arg;
 
-    timer_init(group, number, &config); // Configure the timer
-    timer_set_counter_value(group, number, 0); // Start counting from 0
-    timer_set_alarm_value(group, number, counts); // Generate an alarm after 1,000,000 counts = 1 s
+    timer_init(group, number, &config);
+    timer_set_counter_value(group, number, 0);
+    timer_set_alarm_value(group, number, counts);
 
     timer_isr_register(
         group, 

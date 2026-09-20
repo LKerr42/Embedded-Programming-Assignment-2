@@ -137,6 +137,7 @@ void update() {
 void render() {
     cls(0);
     
+    //handle rendering for alt app states
     if (currentState != PLAY) {
         if (currentState == INSTRUCTIONS) {
             print_xy("Instructions:\n", 0, 0);
@@ -196,7 +197,6 @@ void render() {
 void app_main() {
     graphics_init();
     setFont(FONT_UBUNTU16);
-    //setFont(FONT_SMALL);
 
     input_output_init();
     init_game();
@@ -205,48 +205,12 @@ void app_main() {
     srand(time(NULL)); 
 
     //timers
-    timers[0] = init_timer(30.0, 0, 0, changeSpeedCallback, NULL);
-    timers[1] = init_timer(15.0, 0, 1, addEnemyCallback, NULL);
+    timers[0] = init_timer(40.0, 0, 0, change_speed_callback, NULL);
+    timers[1] = init_timer(15.0, 0, 1, add_enemy_callback, NULL);
     timers[2] = init_timer(4.0, 1, 0, restart_game_callback, NULL);
 
     while (1) {
-        //ets_printf("GAME LOOP RUNNING\n");
-
         update();
         render();
-
-        //vTaskDelay(pdMS_TO_TICKS(1000));
     }
-
-    // -- GRAPHICS DEMO --
-    // graphics_init();
-    // uint64_t current_time, last_time=esp_timer_get_time();
-
-    // for(int i=0; i<135*240; i++) {
-    //     frame_buffer[i]=i*2;
-    // }
-    // flip_frame();
-
-    // while(gpio_get_level(0));
-
-    // setFont(FONT_UBUNTU16);
-    // while(1) {
-    //     cls(0);
-    //     for(int i=0; i<500; i++) {
-    //         draw_line(
-    //             rand() % display_width, 
-    //             rand() % display_height,
-    //             rand() % display_width,
-    //             rand() % display_height,
-    //             rand()
-    //         );
-    //     }
-
-    //     current_time = esp_timer_get_time();
-    //     draw_rectangle(0, 0, 80, 16, rgbToColour(30,30,100));
-    //     gprintf("FPS:%.2f\n", 1.0e6f / (current_time - last_time));
-    //     last_time = current_time;
-        
-    //     flip_frame();
-    // }
 }
