@@ -9,6 +9,12 @@ typedef enum {
     RIGHT_UP
 } KEY_TYPE;
 
+typedef struct GPIOState {
+    volatile int triggered;
+    void (*callback)();
+    void* volatile argument;
+} GPIOState;
+
 KEY_TYPE getInput();
 void input_output_init();
 

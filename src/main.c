@@ -27,6 +27,8 @@ AppState currentState = INSTRUCTIONS;
 //abritrary timers, the fourth timer is reserved for io
 timer* timers[3] = {NULL, NULL, NULL};
 
+extern GPIOState *GPIOhandler;
+
 void set_app_state(AppState newState) {
     if (newState == PLAY) {
         reset_game();
@@ -42,11 +44,6 @@ void restart_game_callback(void* arg) {
 }
 
 void update() {
-    //handle inputs
-    KEY_TYPE key = getInput();
-
-    if (key != NO_INPUT) currentKey = key;
-
     //handle timers
     for (int i = 0; i < 3; i++) {
         if (timers[i] == NULL) continue;
@@ -55,6 +52,17 @@ void update() {
             timers[i]->triggered = 0;
         }
     }
+    
+    //handle GPIO callback
+    if (GPIOhandler->triggered) {
+        GPIOhandler->callback();
+        GPIOhandler->triggered = 0;
+    }
+
+    //handle inputs
+    KEY_TYPE key = getInput();
+
+    if (key != NO_INPUT) currentKey = key;
 
     //handle alt app states
     if (currentState == INSTRUCTIONS) {
@@ -100,9 +108,9 @@ void update() {
     if (gameState.player->pos.y <= 1 || gameState.player->pos.y + gameState.player->size.y >= 135) {
         gameState.player->pos.y += -(gameState.player->velocity.y);
         //temp, check timer works
-        setFontColour(255, 255, 255);
-        set_app_state(SCORE);
-        return;
+        // setFontColour(255, 255, 255);
+        // set_app_state(SCORE);
+        // return;
     }
 
     //update all gameState.enemies
@@ -197,7 +205,7 @@ void app_main() {
     srand(time(NULL)); 
 
     //timers
-    timers[0] = init_timer(20.0, 0, 0, changeSpeedCallback, NULL);
+    timers[0] = init_timer(30.0, 0, 0, changeSpeedCallback, NULL);
     timers[1] = init_timer(15.0, 0, 1, addEnemyCallback, NULL);
     timers[2] = init_timer(4.0, 1, 0, restart_game_callback, NULL);
 
