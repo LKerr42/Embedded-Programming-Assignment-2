@@ -35,7 +35,7 @@ typedef struct LinkedList {
 typedef struct GameState {
     Entity *player;
     LinkedList *enemies;
-    int score;
+    int score, highScore;
 } GameState;
 
 Entity* create_entity(Vec2F S, Vec2F P, Colour C);

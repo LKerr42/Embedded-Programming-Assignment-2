@@ -16,7 +16,7 @@ static int numberEnemies = 0;
 
 void init_game() {
     //init player
-    gameState.player = create_entity((Vec2F){10, 20}, (Vec2F){210, 50}, RED);
+    gameState.player = create_entity((Vec2F){11, 21}, (Vec2F){210, 50}, RED);
 
     //init enemies
     gameState.enemies = calloc(1, sizeof(LinkedList));
@@ -39,7 +39,7 @@ void add_node(LinkedList *list) {
     numberEnemies++;
 
     EnemyNode *temp = calloc(1, sizeof(EnemyNode));
-    temp->enemy = create_entity((Vec2F){20, 10}, (Vec2F){0, rand() % 125}, WHITE);
+    temp->enemy = create_entity((Vec2F){19, 9}, (Vec2F){0, rand() % 125}, WHITE);
     temp->enemy->moving = 1;
     temp->enemy->velocity = (Vec2F){currentEnemyVelocity, 0};
 

@@ -29,6 +29,8 @@ timer* timers[4] = {NULL, NULL, NULL, NULL};
 
 extern GPIOState *GPIOhandler;
 
+extern image_header spaceship;
+
 void set_app_state(AppState newState) {
     if (newState == PLAY) {
         reset_game();
@@ -41,6 +43,8 @@ void restart_game_callback(void* arg) {
     set_app_state(PLAY);
 
     stop_timer(timers[2]);
+    reset_timer(timers[0]);
+    reset_timer(timers[1]);
 }
 
 void update() {
@@ -110,6 +114,8 @@ void update() {
         //temp, check timer works
         // setFontColour(255, 255, 255);
         // set_app_state(SCORE);
+
+        // if (gameState.score > gameState.highScore) gameState.highScore = gameState.score;
         // return;
     }
 
@@ -145,10 +151,13 @@ void render() {
             print_xy("avoid the enemies, get points.\n", CENTER, (display_height >> 1) - 8);
             print_xy("Press the left button to start\n", CENTER, (display_height >> 1) + 8);
         } else {
-            char buffer[16];
-            snprintf(buffer, sizeof(buffer), "Score: %i\n", gameState.score);
-            print_xy("You Died!\n", CENTER, (display_height >> 1) - 16);
-            print_xy(buffer, CENTER, (display_height >> 1));
+            char scoreBuffer[32], highScoreBuffer[32];
+            snprintf(scoreBuffer, sizeof(scoreBuffer), "Score this game: %i\n", gameState.score);
+            snprintf(highScoreBuffer, sizeof(highScoreBuffer), "Your high Score: %i\n", gameState.highScore);
+
+            print_xy("You Died!\n", CENTER, (display_height >> 1) - 24);
+            print_xy(scoreBuffer, CENTER, (display_height >> 1) - 8);
+            print_xy(highScoreBuffer, CENTER, (display_height >> 1) + 8);
         }
         
         flip_frame();
@@ -156,17 +165,25 @@ void render() {
     }
 
     //draw gameState.player
-    draw_rectangle(
-        gameState.player->pos.x, 
-        gameState.player->pos.y, 
-        gameState.player->size.x, 
-        gameState.player->size.y, 
-        rgbToColour(
-            gameState.player->colour.r,
-            gameState.player->colour.g,
-            gameState.player->colour.b
-        )
+    // draw_rectangle(
+    //     gameState.player->pos.x, 
+    //     gameState.player->pos.y, 
+    //     gameState.player->size.x, 
+    //     gameState.player->size.y, 
+    //     rgbToColour(
+    //         gameState.player->colour.r,
+    //         gameState.player->colour.g,
+    //         gameState.player->colour.b
+    //     )
+    // );
+    draw_image(
+        (image_header *) &spaceship, 
+        gameState.player->pos.x + 5, 
+        gameState.player->pos.y + 10
     );
+    //draw_pixel(gameState.player->pos.x, gameState.player->pos.y, rgbToColour(255, 0, 0));
+
+
 
     //draw all gameState.enemies
     EnemyNode *current = gameState.enemies->headPointer;

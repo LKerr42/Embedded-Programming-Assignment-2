@@ -62,6 +62,12 @@ void stop_timer(timer* t) {
     timer_pause(t->group, t->number);
 }
 
+void reset_timer(timer* t) {
+    timer_pause(t->group, t->number);
+    timer_set_counter_value(t->group, t->number, 0);
+    timer_start(t->group, t->number);
+}
+
 void update_timer_period(timer* t, float seconds) {
     timer_set_alarm_value(t->group, t->number, seconds * 1000000);
 }

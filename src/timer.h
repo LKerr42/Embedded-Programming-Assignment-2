@@ -15,6 +15,7 @@ typedef struct timer {
 timer* init_timer(float seconds, int groupNum, int timerNum, void (*timerCallback)(void*), void* arg);
 void start_timer(timer* t);
 void stop_timer(timer* t);
+void reset_timer(timer* t);
 void update_timer_period(timer* t, float seconds);
 
 #endif
