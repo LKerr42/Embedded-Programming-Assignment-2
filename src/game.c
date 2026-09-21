@@ -1,36 +1,30 @@
 #include "game.h"
 
-extern GameState gameState;
+GameState gameState;
 
-static const Colour WHITE  = {255, 255, 255};
-// static const Colour BLACK  = {0, 0, 0};
-static const Colour RED    = {255, 0, 0};
-// static const Colour BLUE   = {0, 0, 255};
-// static const Colour YELLOW = {255, 255, 0};
-// static const Colour GREEN  = {0, 255, 0};
-// static const Colour ORANGE = {255, 128, 0};
-// static const Colour PURPLE = {191, 0, 255};
+extern void* spaceship_pointer;
+extern void* asteroid_pointer;
 
 static float currentEnemyVelocity = 2;
 static int numberEnemies = 0;
 
 void init_game() {
     //init player
-    gameState.player = create_entity((Vec2F){11, 21}, (Vec2F){210, 50}, RED);
+    gameState.player = create_entity((Vec2F){11, 21}, (Vec2F){210, 50}, spaceship_pointer);
 
     //init enemies
     gameState.enemies = calloc(1, sizeof(LinkedList));
     add_node(gameState.enemies);
 }
 
-Entity* create_entity(Vec2F S, Vec2F P, Colour C) {
+Entity* create_entity(Vec2F S, Vec2F P, void* Sp) {
     // Allocate memory
     Entity* e = calloc(1, sizeof(Entity)); 
     if (e == NULL) return NULL;     
     
     e->size = S;
     e->pos = P;
-    e->colour = C;
+    e->sprite = Sp;
     
     return e; 
 }
@@ -39,8 +33,8 @@ void add_node(LinkedList *list) {
     numberEnemies++;
 
     EnemyNode *temp = calloc(1, sizeof(EnemyNode));
-    temp->enemy = create_entity((Vec2F){19, 9}, (Vec2F){0, rand() % 125}, WHITE);
-    temp->enemy->moving = 1;
+    temp->enemy = create_entity((Vec2F){19, 9}, (Vec2F){0, rand() % 125}, asteroid_pointer);
+    
     temp->enemy->velocity = (Vec2F){currentEnemyVelocity, 0};
 
     temp->backwards = list->tailPointer;

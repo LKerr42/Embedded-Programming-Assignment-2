@@ -19,7 +19,13 @@ typedef enum AppState {
     SCORE
 } AppState;
 
-GameState gameState;
+extern GameState gameState;
+
+extern image_header spaceship_image;
+extern image_header asteroid_image;
+
+void* spaceship_pointer = &spaceship_image;
+void* asteroid_pointer = &asteroid_image;
 
 KEY_TYPE currentKey = NO_INPUT;
 AppState currentState = INSTRUCTIONS;
@@ -28,8 +34,6 @@ AppState currentState = INSTRUCTIONS;
 timer* timers[4] = {NULL, NULL, NULL, NULL};
 
 extern GPIOState *GPIOhandler;
-
-extern image_header spaceship;
 
 void set_app_state(AppState newState) {
     if (newState == PLAY) {
@@ -85,28 +89,23 @@ void update() {
     switch (currentKey) {
         case LEFT_DOWN:
             gameState.player->velocity.y = 2;
-            gameState.player->moving = 1;
             break;
         case RIGHT_DOWN:
             gameState.player->velocity.y = -2;
-            gameState.player->moving = 1;
             break;   
         case LEFT_UP:
             gameState.player->velocity.y = 0;
-            gameState.player->moving = 0;
             break;
         case RIGHT_UP:
             gameState.player->velocity.y = 0;
-            gameState.player->moving = 0;
             break;
         case NO_INPUT:
             break; 
     }
 
-    if (gameState.player->moving) {
-        gameState.player->pos.x += gameState.player->velocity.x;
-        gameState.player->pos.y += gameState.player->velocity.y;
-    }
+    //add velocity to player
+    gameState.player->pos.x += gameState.player->velocity.x;
+    gameState.player->pos.y += gameState.player->velocity.y;
 
     //keep gameState.player in bounds
     if (gameState.player->pos.y <= 1 || gameState.player->pos.y + gameState.player->size.y >= 135) {
@@ -164,41 +163,24 @@ void render() {
         return;
     }
 
-    //draw gameState.player
-    // draw_rectangle(
-    //     gameState.player->pos.x, 
-    //     gameState.player->pos.y, 
-    //     gameState.player->size.x, 
-    //     gameState.player->size.y, 
-    //     rgbToColour(
-    //         gameState.player->colour.r,
-    //         gameState.player->colour.g,
-    //         gameState.player->colour.b
-    //     )
-    // );
+    //draw player
     draw_image(
-        (image_header *) &spaceship, 
+        (image_header*)gameState.player->sprite, 
         gameState.player->pos.x + 5, 
         gameState.player->pos.y + 10
     );
     //draw_pixel(gameState.player->pos.x, gameState.player->pos.y, rgbToColour(255, 0, 0));
 
-
-
-    //draw all gameState.enemies
+    //draw all enemies
     EnemyNode *current = gameState.enemies->headPointer;
     while (current != NULL) {
-        draw_rectangle(
-            current->enemy->pos.x, 
-            current->enemy->pos.y, 
-            current->enemy->size.x, 
-            current->enemy->size.y, 
-            rgbToColour(
-                current->enemy->colour.r,
-                current->enemy->colour.g,
-                current->enemy->colour.b
-            )
+        draw_image(
+            (image_header*)current->enemy->sprite, 
+            current->enemy->pos.x + 9, 
+            current->enemy->pos.y + 4
         );
+
+        //draw_pixel(current->enemy->pos.x, current->enemy->pos.y, rgbToColour(255, 0, 0));
 
         current = current->fowards;
     }
@@ -223,7 +205,7 @@ void app_main() {
 
     //timers
     timers[0] = init_timer(40.0, 0, 0, change_speed_callback, NULL);
-    timers[1] = init_timer(15.0, 0, 1, add_enemy_callback, NULL);
+    timers[1] = init_timer(14.5, 0, 1, add_enemy_callback, NULL);
     timers[2] = init_timer(4.0, 1, 0, restart_game_callback, NULL);
 
     while (1) {
