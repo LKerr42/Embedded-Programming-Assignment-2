@@ -1,5 +1,8 @@
 #include "game.h"
 
+#define MAX(x, y) ((x) < (y) ? (x) : (y))
+#define MIN(x, y) ((x) > (y) ? (x) : (y))
+
 GameState gameState;
 
 extern void* spaceship_pointer;
@@ -10,14 +13,14 @@ static int numberEnemies = 0;
 
 void init_game() {
     //init player
-    gameState.player = create_entity((Vec2F){11, 21}, (Vec2F){210, 50}, spaceship_pointer);
+    gameState.player = create_entity((Vec2){11, 21}, (Vec2){210, 50}, spaceship_pointer);
 
     //init enemies
     gameState.enemies = calloc(1, sizeof(LinkedList));
     add_node(gameState.enemies);
 }
 
-Entity* create_entity(Vec2F S, Vec2F P, void* Sp) {
+Entity* create_entity(Vec2 S, Vec2 P, void* Sp) {
     // Allocate memory
     Entity* e = calloc(1, sizeof(Entity)); 
     if (e == NULL) return NULL;     
@@ -33,9 +36,9 @@ void add_node(LinkedList *list) {
     numberEnemies++;
 
     EnemyNode *temp = calloc(1, sizeof(EnemyNode));
-    temp->enemy = create_entity((Vec2F){19, 9}, (Vec2F){0, rand() % 125}, asteroid_pointer);
+    temp->enemy = create_entity((Vec2){19, 9}, (Vec2){0, rand() % 125}, asteroid_pointer);
     
-    temp->enemy->velocity = (Vec2F){currentEnemyVelocity, 0};
+    temp->enemy->velocity = (Vec2){currentEnemyVelocity, 0};
 
     temp->backwards = list->tailPointer;
     temp->fowards = NULL;
@@ -80,6 +83,13 @@ void reset_game() {
     add_node(gameState.enemies);
 }
 
+int collision(Vec2 pos0, Vec2 size0, Vec2 pos1, Vec2 size1) {
+    return (pos0.x < pos1.x + size1.x) &&
+           (pos1.x < pos0.x + size0.x) &&
+           (pos0.y < pos1.y + size1.y) &&
+           (pos1.y < pos0.y + size0.y);
+}
+
 void change_speed_callback(void* arg) {
     float speedDelta = 0.5;
 
@@ -89,8 +99,8 @@ void change_speed_callback(void* arg) {
 
     EnemyNode *current = gameState.enemies->headPointer;
     while (current != NULL) {
-        Vec2F oldVel = current->enemy->velocity;
-        current->enemy->velocity = (Vec2F){currentEnemyVelocity, oldVel.y};
+        Vec2 oldVel = current->enemy->velocity;
+        current->enemy->velocity = (Vec2){currentEnemyVelocity, oldVel.y};
         current = current->fowards;
     }
 }

@@ -110,12 +110,6 @@ void update() {
     //keep gameState.player in bounds
     if (gameState.player->pos.y <= 1 || gameState.player->pos.y + gameState.player->size.y >= 135) {
         gameState.player->pos.y += -(gameState.player->velocity.y);
-        //temp, check timer works
-        // setFontColour(255, 255, 255);
-        // set_app_state(SCORE);
-
-        // if (gameState.score > gameState.highScore) gameState.highScore = gameState.score;
-        // return;
     }
 
     //update all gameState.enemies
@@ -129,6 +123,23 @@ void update() {
     //check for collision and enemy death
     //first, confirm there is a front node
     if (gameState.enemies->headPointer == NULL) return;
+
+    //check for a collision, if so set to the score state
+    if (gameState.enemies->headPointer->enemy->pos.x > 200) { //only check for collision if the enemy is close enough
+        if (collision(
+                gameState.player->pos, 
+                gameState.player->size,
+                gameState.enemies->headPointer->enemy->pos,
+                gameState.enemies->headPointer->enemy->size
+            )) {
+            setFontColour(255, 255, 255);
+            set_app_state(SCORE);
+
+            if (gameState.score > gameState.highScore) gameState.highScore = gameState.score;
+            return;
+        }
+    }
+
 
     //then if we can continue, add to score then pop and add a new node
     if (gameState.enemies->headPointer->enemy->pos.x + gameState.enemies->headPointer->enemy->size.x >= 240) {

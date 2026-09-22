@@ -3,12 +3,12 @@
 
 #include <stdlib.h>
 
-typedef struct Vec2F {
-    float x, y;
-} Vec2F;
+typedef struct Vec2 {
+    int x, y;
+} Vec2;
 
 typedef struct Entity {
-    Vec2F size, pos, velocity;
+    Vec2 size, pos, velocity;
     void* sprite;
 } Entity;
 
@@ -29,11 +29,12 @@ typedef struct GameState {
     int score, highScore;
 } GameState;
 
-Entity* create_entity(Vec2F S, Vec2F P, void* Sp);
+Entity* create_entity(Vec2 S, Vec2 P, void* Sp);
 void init_game();
 void add_node(LinkedList *list);
 void pop_node(LinkedList *list);
 void reset_game();
+int collision(Vec2 pos0, Vec2 size0, Vec2 pos1, Vec2 size1);
 
 void change_speed_callback(void* arg);
 void add_enemy_callback(void* arg);
